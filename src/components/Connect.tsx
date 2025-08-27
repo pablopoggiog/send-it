@@ -30,10 +30,12 @@ export const Connect = () => {
 
         {account?.isConnected ? (
           <div className="account-info">
-            <span>Connected: </span>
-            <span className="account-address">
-              {truncateAddress(account.address)}
-            </span>
+            <div className="account-info-text">
+              <span>Connected: </span>
+              <span className="account-address">
+                {truncateAddress(account.address)}
+              </span>
+            </div>
             <button
               type="button"
               className="connect-button secondary"
