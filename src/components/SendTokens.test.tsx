@@ -95,7 +95,7 @@ describe("SendTokens", () => {
     renderWithProviders(<SendTokens />);
 
     const recipientInput = screen.getByPlaceholderText(
-      "Select a contact or paste a Avalanche (C-Chain) address >"
+      "Paste an Avalanche (C-Chain) address >"
     );
 
     // Test invalid address
@@ -148,7 +148,7 @@ describe("SendTokens", () => {
 
     const sendButton = screen.getByRole("button", { name: "Send" });
     const recipientInput = screen.getByPlaceholderText(
-      "Select a contact or paste a Avalanche (C-Chain) address >"
+      "Paste an Avalanche (C-Chain) address >"
     );
     const amountInput = screen.getByPlaceholderText("0");
 

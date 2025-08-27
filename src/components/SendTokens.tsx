@@ -290,7 +290,7 @@ export const SendTokens = () => {
               ))}
               <button
                 type="button"
-                className={`percentage-button ${
+                className={`percentage-button max-button-special ${
                   selectedPercentage === null &&
                   amount ===
                     (usdcBalance
@@ -315,7 +315,7 @@ export const SendTokens = () => {
             <input
               type="text"
               className={`input ${recipientError ? "error" : ""}`}
-              placeholder="Select a contact or paste a Avalanche (C-Chain) address >"
+              placeholder="Paste an Avalanche (C-Chain) address >"
               value={recipient}
               onChange={(e) => handleRecipientChange(e.target.value)}
               disabled={!isConnected}

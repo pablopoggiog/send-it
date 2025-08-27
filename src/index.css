@@ -523,6 +523,35 @@ body::before {
   transform: translateY(-1px);
 }
 
+/* Special styling for Max button */
+.max-button-special {
+  background: linear-gradient(
+    135deg,
+    var(--accent-secondary) 0%,
+    #7c3aed 100%
+  ) !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.max-button-special:hover:not(.active):not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+  border-color: #7c3aed !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.max-button-special.active {
+  background: linear-gradient(
+    135deg,
+    var(--accent-secondary) 0%,
+    #7c3aed 100%
+  ) !important;
+  border-color: var(--accent-secondary) !important;
+  box-shadow: var(--shadow-md), 0 0 20px rgba(139, 92, 246, 0.3) !important;
+}
+
 .token-selector {
   display: flex;
   align-items: center;
@@ -645,7 +674,7 @@ body::before {
   color: var(--text-primary);
   font-size: 1.5rem;
   font-weight: 700;
-  text-align: center;
+  text-align: right;
   min-width: 0;
   width: 100%;
 }
@@ -985,6 +1014,7 @@ body::before {
 
   .amount-input {
     font-size: 1.25rem;
+    text-align: center;
   }
 
   .amount-input-container {
