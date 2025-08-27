@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { formatEther } from "viem";
-import { useAccount, useBalance, useWalletClient } from "wagmi";
+import {
+  useAccount,
+  useBalance,
+  useConnect,
+  useDisconnect,
+  useWalletClient
+} from "wagmi";
+import { injected } from "wagmi/connectors";
 import { truncateAddress } from "../lib/address";
 
 interface Account {
@@ -12,6 +19,8 @@ interface Account {
 export const AccountSelector = () => {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const { disconnect } = useDisconnect();
+  const { connect, isPending } = useConnect();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -39,14 +48,14 @@ export const AccountSelector = () => {
         const accountPromises = walletAccounts.map(async (acc, index) => {
           // Get balance for each account
           const balance = await walletClient.request({
-            method: "eth_getBalance",
+            method: "eth_getBalance" as any,
             params: [acc, "latest"]
           });
 
           return {
             address: acc,
             name: `Account ${index + 1}`,
-            balance: `${formatEther(BigInt(balance))} AVAX`
+            balance: `${formatEther(BigInt(balance as string))} AVAX`
           };
         });
 
@@ -176,6 +185,14 @@ export const AccountSelector = () => {
     }
   };
 
+  const handleConnect = () => {
+    connect({ connector: injected() });
+  };
+
+  const handleDisconnect = () => {
+    disconnect();
+  };
+
   if (!isConnected) {
     return (
       <div className="form-group">
@@ -185,6 +202,21 @@ export const AccountSelector = () => {
             <div className="token-name">Not connected</div>
             <div className="token-balance">0 AVAX</div>
           </div>
+          <button
+            type="button"
+            className="connect-wallet-button"
+            onClick={handleConnect}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <span className="loading"></span>
+                Connecting...
+              </>
+            ) : (
+              "Connect Wallet"
+            )}
+          </button>
         </div>
       </div>
     );
@@ -222,8 +254,27 @@ export const AccountSelector = () => {
               {selectedAccount?.balance || "0 AVAX"}
             </div>
           </div>
-          <div className="account-address">
-            {selectedAccount ? truncateAddress(selectedAccount.address) : ""}
+          <div className="wallet-status">
+            <div className="wallet-info">
+              <div className="status-indicator"></div>
+              <span className="wallet-address">
+                {selectedAccount
+                  ? truncateAddress(selectedAccount.address as `0x${string}`)
+                  : ""}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="disconnect-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDisconnect();
+              }}
+              disabled={isPending}
+              title="Disconnect Wallet"
+            >
+              {isPending ? <span className="loading"></span> : "×"}
+            </button>
           </div>
           {accounts.length > 1 && (
             <div className="dropdown-arrow">{isOpen ? "▲" : "▼"}</div>
@@ -261,7 +312,7 @@ export const AccountSelector = () => {
                   <div className="account-item-info">
                     <div className="account-item-name">{account.name}</div>
                     <div className="account-item-address">
-                      {truncateAddress(account.address)}
+                      {truncateAddress(account.address as `0x${string}`)}
                     </div>
                   </div>
                   <div className="account-item-balance">{account.balance}</div>

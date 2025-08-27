@@ -171,7 +171,7 @@ body::before {
 .container {
   max-width: 540px;
   margin: 0 auto;
-  padding: 6rem 1.5rem 2rem;
+  padding: 2rem 1.5rem 2rem;
   width: 100%;
   min-height: 100vh;
   display: flex;
@@ -534,6 +534,8 @@ body::before {
   transition: all var(--transition-normal);
   position: relative;
   flex-shrink: 0;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .token-selector:hover {
@@ -777,22 +779,20 @@ body::before {
   border-bottom-color: var(--accent-success);
 }
 
-/* App Header - Fixed at top */
+/* App Header - Static positioning to avoid overlap */
 .app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  padding: 1.5rem 2rem;
+  position: static;
+  padding: 1.5rem 2.5rem;
   background: var(--gradient-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  margin: -2.5rem -2.5rem 2rem -2.5rem;
 }
 
 .header-content {
@@ -932,7 +932,7 @@ body::before {
 
 @media (max-width: 768px) {
   .container {
-    padding: 5rem 1rem 2rem;
+    padding: 2rem 1rem 2rem;
     min-height: 100vh;
     display: flex;
     align-items: stretch;
@@ -950,6 +950,7 @@ body::before {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
   }
 
   .header-content {
@@ -1016,6 +1017,7 @@ body::before {
 @media (max-width: 480px) {
   .app-header {
     padding: 0.75rem 1rem;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
   }
 
   .header-content .title {
@@ -1092,6 +1094,16 @@ body::before {
 
 .account-selector.clickable:hover .dropdown-arrow {
   color: var(--accent-primary);
+}
+
+/* Account selector specific token selector styling */
+.account-selector .token-selector {
+  background: var(--input-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  gap: 1rem;
 }
 
 .account-dropdown {
