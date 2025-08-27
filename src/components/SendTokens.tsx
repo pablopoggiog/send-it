@@ -198,7 +198,9 @@ export const SendTokens = () => {
       toast.success(
         (t) => (
           <div>
-            <div>Transaction successful!</div>
+            <div style={{ marginBottom: "8px", fontWeight: "600" }}>
+              Transaction successful!
+            </div>
             <a
               href={`https://subnets-test.avax.network/c-chain/tx/${hash}`}
               target="_blank"
@@ -206,14 +208,22 @@ export const SendTokens = () => {
               style={{
                 color: "#fff",
                 textDecoration: "underline",
-                fontSize: "12px"
+                fontSize: "12px",
+                opacity: "0.9",
+                transition: "opacity 0.2s ease"
               }}
+              onMouseEnter={(e) =>
+                ((e.target as HTMLElement).style.opacity = "1")
+              }
+              onMouseLeave={(e) =>
+                ((e.target as HTMLElement).style.opacity = "0.9")
+              }
             >
               View on explorer
             </a>
           </div>
         ),
-        { id: toastId, duration: 6000 }
+        { id: toastId }
       );
 
       setRecipient("");
