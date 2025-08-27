@@ -270,21 +270,12 @@ export const SendTokens = () => {
                 onChange={(e) => handleAmountChange(e.target.value)}
                 disabled={!isConnected}
               />
-
-              <button
-                type="button"
-                className="max-button"
-                onClick={handleMaxClick}
-                disabled={!isConnected || !usdcBalance}
-              >
-                Max
-              </button>
             </div>
 
             <div className="usd-value">$0 USD</div>
 
             <div className="percentage-buttons">
-              {[25, 50, 75].map((percentage) => (
+              {[25, 50].map((percentage) => (
                 <button
                   key={percentage}
                   type="button"
@@ -297,6 +288,22 @@ export const SendTokens = () => {
                   {percentage}%
                 </button>
               ))}
+              <button
+                type="button"
+                className={`percentage-button ${
+                  selectedPercentage === null &&
+                  amount ===
+                    (usdcBalance
+                      ? parseFloat(formatUsdc(usdcBalance.value)).toFixed(6)
+                      : "")
+                    ? "active"
+                    : ""
+                }`}
+                onClick={handleMaxClick}
+                disabled={!isConnected || !usdcBalance}
+              >
+                Max
+              </button>
             </div>
 
             {amountError && <div className="error-message">{amountError}</div>}
