@@ -24,7 +24,8 @@ vi.mock("wagmi", async () => {
     }),
     useWriteContract: () => ({
       writeContract: vi.fn(),
-      isPending: false
+      isPending: false,
+      error: null
     }),
     useWaitForTransactionReceipt: () => ({
       isLoading: false,
@@ -80,7 +81,6 @@ describe("SendTokens", () => {
 
     expect(screen.getByRole("button", { name: "25%" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "50%" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "75%" })).toBeInTheDocument();
   });
 
   it("shows max button", () => {

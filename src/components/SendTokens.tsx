@@ -40,7 +40,7 @@ export const SendTokens = () => {
   });
 
   // Contract write
-  const { data: hash, writeContract, isPending } = useWriteContract();
+  const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   // Wait for transaction
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -190,6 +190,32 @@ export const SendTokens = () => {
     }
   }, [isSuccess, hash, refetchUsdcBalance]);
 
+  // Handle transaction errors (rejections, cancellations, etc.)
+  useEffect(() => {
+    if (error) {
+      console.error("Transaction error:", error);
+
+      // Check if the error is a user rejection
+      const errorMessage = error.message?.toLowerCase() || "";
+      const isUserRejection =
+        errorMessage.includes("user rejected") ||
+        errorMessage.includes("user denied") ||
+        errorMessage.includes("user cancelled") ||
+        errorMessage.includes("user canceled") ||
+        errorMessage.includes("transaction cancelled") ||
+        errorMessage.includes("transaction canceled");
+
+      if (isUserRejection) {
+        // User rejected the transaction, silently reset state
+        setIsSubmitting(false);
+      } else {
+        // Other errors, show alert and reset state
+        alert("Failed to send transaction. Please try again.");
+        setIsSubmitting(false);
+      }
+    }
+  }, [error]);
+
   // Reset form when wallet disconnects
   useEffect(() => {
     if (!isConnected) {
@@ -199,6 +225,7 @@ export const SendTokens = () => {
       setRecipientError("");
       setAmountError("");
       setSuccessMessage("");
+      setIsSubmitting(false);
     }
   }, [isConnected]);
 
@@ -338,7 +365,9 @@ export const SendTokens = () => {
                   ? "Confirming..."
                   : isConfirming
                   ? "Processing..."
-                  : "Sending..."}
+                  : isSubmitting
+                  ? "Sending..."
+                  : "Loading..."}
               </>
             ) : (
               "Send"
