@@ -1,7 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { config } from './lib/wagmiConfig.ts';
-import { Connect } from './components/Connect.tsx';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from "wagmi";
+import { SendTokens } from "./components/SendTokens.tsx";
+import { config } from "./lib/wagmiConfig.ts";
 
 const queryClient = new QueryClient();
 
@@ -9,7 +9,7 @@ export function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <Connect />
+        <SendTokens />
       </QueryClientProvider>
     </WagmiProvider>
   );

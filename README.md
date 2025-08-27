@@ -1,42 +1,214 @@
-# Ava Labs Frontend Takehome Challenge
+# USDC Token Transfer App
 
-This repository contains a skeleton for the submission of the Ava Labs Frontend Takehome Challenge.
+A modern web application for sending USDC tokens on the Avalanche Fuji C-Chain testnet. Built with React, TypeScript, and Web3 technologies.
 
-Please refer to the `package.json` for information on the package manager and node engine.
+## Features
 
-It includes a `vite` based `React-Typescript` project, ready for contributions. Run the dev server via:
+- 🔗 **Wallet Connection**: Connect to MetaMask, Core, or any injected Web3 wallet
+- 💰 **Balance Display**: Real-time display of USDC and AVAX balances
+- 📝 **Form Validation**: Comprehensive validation for addresses and amounts
+- 🎯 **Smart Input**: Percentage buttons (25%, 50%, 75%) and Max button for quick amount selection
+- 🔄 **Transaction Tracking**: Real-time transaction status updates
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
+- 🎨 **Modern UI**: Clean, dark-themed interface inspired by Core Web's Send tool
+
+## Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Web3**: Wagmi + Viem
+- **Styling**: CSS with modern design system
+- **Testing**: Vitest + React Testing Library
+- **Build Tool**: Vite
+- **Package Manager**: pnpm
+
+## Prerequisites
+
+- Node.js >= 22.14.0
+- pnpm >= 10.5.2
+- A Web3 wallet (MetaMask, Core, etc.)
+- Fuji testnet AVAX for gas fees
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd frontend-takehome-skeleton-main
+```
+
+2. Install dependencies:
+```bash
+pnpm install
+```
+
+3. Start the development server:
+```bash
+pnpm dev
+```
+
+4. Open your browser and navigate to `http://localhost:5173`
+
+## Usage
+
+### Connecting Your Wallet
+
+1. Click the "Connect Wallet" button in the top-right corner
+2. Approve the connection in your wallet
+3. Ensure your wallet is connected to Avalanche Fuji testnet
+
+### Getting Test Tokens
+
+- **AVAX**: Get test AVAX from the [Fuji Faucet](https://faucet.avax.network/)
+- **USDC**: The app uses the official USDC contract on Fuji testnet
+
+### Sending USDC
+
+1. **Enter Recipient Address**: Paste a valid Avalanche C-Chain address
+2. **Set Amount**: 
+   - Type the amount manually, or
+   - Use percentage buttons (25%, 50%, 75%), or
+   - Click "Max" to send your entire balance
+3. **Review**: Check the recipient address and amount
+4. **Send**: Click the "Send" button and confirm in your wallet
+
+### Transaction Status
+
+- **Confirming**: Transaction is being processed by your wallet
+- **Processing**: Transaction is being mined on the blockchain
+- **Success**: Transaction completed with explorer link
+
+## Testing
+
+Run the test suite:
+
+```bash
+pnpm test
+```
+
+Run tests in watch mode:
+
+```bash
+pnpm test --watch
+```
+
+### Test Coverage
+
+The application includes comprehensive unit tests covering:
+
+- Component rendering
+- Form validation
+- User interactions
+- Wallet connection
+- Transaction flow
+
+## Project Structure
 
 ```
-pnpm run dev
+src/
+├── components/
+│   ├── Connect.tsx          # Wallet connection component
+│   ├── SendTokens.tsx       # Main token transfer form
+│   └── *.test.tsx          # Component tests
+├── lib/
+│   ├── address.ts          # Address utility functions
+│   ├── usdc.ts            # USDC contract configuration
+│   └── wagmiConfig.ts     # Wagmi configuration
+├── App.tsx                # Main application component
+└── main.tsx              # Application entry point
 ```
 
-It includes a linter, which can be run via:
+## Configuration
+
+### Network Configuration
+
+The app is configured for Avalanche Fuji testnet:
+
+- **Chain ID**: 43113
+- **RPC URL**: https://api.avax-test.network/ext/bc/C/rpc
+- **USDC Contract**: `0x5425890298aed601595a70AB815c96711a31Bc65`
+
+### Environment Variables
+
+No environment variables are required for basic functionality. The app uses public RPC endpoints.
+
+## Deployment
+
+### Build for Production
+
+```bash
+pnpm build
 ```
-pnpm run lint
-pnpm run format
+
+### Preview Production Build
+
+```bash
+pnpm preview
 ```
 
-It also includes some test scaffolding, which can be run via:
+### Deploy to Vercel
 
-```
-pnpm run test
-```
+1. Install Vercel CLI: `npm i -g vercel`
+2. Deploy: `vercel --prod`
 
-It includes a `wagmi` and `viem` setup for connecting to a web3 wallet. It does not include any component/styling libraries, but you are free to add those, as needed.
+## Security Considerations
 
-## Instructions
+- ✅ Address validation using Viem's `isAddress`
+- ✅ Balance checks before transaction submission
+- ✅ Self-transfer prevention
+- ✅ Input sanitization
+- ✅ Error handling for failed transactions
 
-You can find the assignment in `Frontend_Takehome_Interview_Assignment.pdf`.
+## Browser Support
 
-This repository, including this README, is free for you to modify to complete the takehome challenge. Feel free to delete any code which you don't need.
+- Chrome/Chromium (recommended)
+- Firefox
+- Safari
+- Edge
 
-You can find the rubric by which the assignment will be scored in `RUBRIC.md`.
+## Troubleshooting
 
-Thank you, good luck!
+### Common Issues
 
-## Documentation
+1. **"Invalid C-Chain (EVM) address format"**
+   - Ensure the address starts with `0x` and is 42 characters long
+   - Check for typos in the address
 
-- [React](https://reactjs.org/)
-- [React Query](https://tanstack.com/query/v5/docs/framework/react/overview)
-- [Wagmi](https://wagmi.sh/react/getting-started)
-- [Viem](https://viem.sh/docs/getting-started)
+2. **"Insufficient balance"**
+   - Verify you have enough USDC tokens
+   - Ensure you have AVAX for gas fees
+
+3. **"Transaction failed"**
+   - Check your internet connection
+   - Ensure your wallet is connected to Fuji testnet
+   - Verify you have sufficient gas fees
+
+4. **Wallet not connecting**
+   - Ensure you have a Web3 wallet installed
+   - Try refreshing the page
+   - Check wallet permissions
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check the browser console for error messages
+2. Verify your wallet is connected to the correct network
+3. Ensure you have sufficient test tokens
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- Inspired by Core Web's Send tool UI
+- Built with modern Web3 standards
+- Uses Avalanche Fuji testnet for development
