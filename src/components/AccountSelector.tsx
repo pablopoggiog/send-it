@@ -45,7 +45,7 @@ export const AccountSelector = () => {
 
       // If we get multiple accounts, create account objects
       if (Array.isArray(walletAccounts) && walletAccounts.length > 0) {
-        const accountPromises = walletAccounts.map(async (acc, index) => {
+        const accountPromises = walletAccounts.map(async (acc) => {
           // Get balance for each account
           const balance = await walletClient.request({
             method: "eth_getBalance" as any,
@@ -54,7 +54,7 @@ export const AccountSelector = () => {
 
           return {
             address: acc,
-            name: `Account ${index + 1}`,
+            name: truncateAddress(acc as `0x${string}`),
             balance: `${formatEther(BigInt(balance as string))} AVAX`
           };
         });
@@ -71,10 +71,10 @@ export const AccountSelector = () => {
         // Fallback to single account if wallet doesn't support multiple accounts
         const singleAccount: Account = {
           address: address || "",
-          name: "Account 1",
+          name: truncateAddress(address || ("0x" as `0x${string}`)),
           balance: avaxBalance
             ? `${formatEther(avaxBalance.value)} AVAX`
-            : "0 AVAX"
+            : "- AVAX"
         };
         setAccounts([singleAccount]);
         setSelectedAccount(singleAccount);
@@ -84,10 +84,10 @@ export const AccountSelector = () => {
       // Fallback to single account on error
       const fallbackAccount: Account = {
         address: address || "",
-        name: "Account 1",
+        name: truncateAddress(address || ("0x" as `0x${string}`)),
         balance: avaxBalance
           ? `${formatEther(avaxBalance.value)} AVAX`
-          : "0 AVAX"
+          : "- AVAX"
       };
       setAccounts([fallbackAccount]);
       setSelectedAccount(fallbackAccount);
@@ -198,10 +198,6 @@ export const AccountSelector = () => {
       <div className="form-group">
         <div className="label">Account</div>
         <div className="token-selector">
-          <div className="token-info">
-            <div className="token-name">Not connected</div>
-            <div className="token-balance">0 AVAX</div>
-          </div>
           <button
             type="button"
             className="connect-wallet-button"
@@ -217,6 +213,10 @@ export const AccountSelector = () => {
               "Connect Wallet"
             )}
           </button>
+          <div className="token-info">
+            <div className="token-name">Not connected</div>
+            <div className="token-balance">- AVAX</div>
+          </div>
         </div>
       </div>
     );
@@ -227,9 +227,15 @@ export const AccountSelector = () => {
       <div className="form-group">
         <div className="label">Account</div>
         <div className="token-selector">
+          <div className="wallet-status">
+            <div className="wallet-info">
+              <div className="status-indicator"></div>
+              <span className="wallet-address">Loading...</span>
+            </div>
+          </div>
           <div className="token-info">
             <div className="token-name">Loading accounts...</div>
-            <div className="token-balance">0 AVAX</div>
+            <div className="token-balance">- AVAX</div>
           </div>
         </div>
       </div>
@@ -246,14 +252,6 @@ export const AccountSelector = () => {
           }`}
           onClick={toggleDropdown}
         >
-          <div className="token-info">
-            <div className="token-name">
-              {selectedAccount?.name || "Account 1"}
-            </div>
-            <div className="token-balance">
-              {selectedAccount?.balance || "0 AVAX"}
-            </div>
-          </div>
           <div className="wallet-status">
             <div className="wallet-info">
               <div className="status-indicator"></div>
@@ -275,6 +273,18 @@ export const AccountSelector = () => {
             >
               {isPending ? <span className="loading"></span> : "×"}
             </button>
+          </div>
+          <div className="token-info">
+            <div className="token-name">
+              {truncateAddress(
+                (selectedAccount?.address ||
+                  address ||
+                  "0x0000000000000000000000000000000000000000") as `0x${string}`
+              )}
+            </div>
+            <div className="token-balance">
+              {selectedAccount?.balance || "- AVAX"}
+            </div>
           </div>
           {accounts.length > 1 && (
             <div className="dropdown-arrow">{isOpen ? "▲" : "▼"}</div>

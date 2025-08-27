@@ -239,9 +239,11 @@ export const SendTokens = () => {
               <div className="label">Amount</div>
               <div className="balance-amount">
                 Balance:{" "}
-                {usdcBalance
+                {isConnected && usdcBalance
                   ? `${formatUsdc(usdcBalance.value)} USDC`
-                  : "0 USDC"}
+                  : isConnected
+                  ? "0 USDC"
+                  : "- USDC"}
               </div>
             </div>
 
@@ -251,9 +253,11 @@ export const SendTokens = () => {
                 <div className="token-info">
                   <div className="token-name">USDC</div>
                   <div className="token-balance">
-                    {usdcBalance
+                    {isConnected && usdcBalance
                       ? `${formatUsdc(usdcBalance.value)} USDC`
-                      : "0 USDC"}
+                      : isConnected
+                      ? "0 USDC"
+                      : "- USDC"}
                   </div>
                 </div>
               </div>
