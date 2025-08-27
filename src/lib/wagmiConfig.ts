@@ -1,11 +1,17 @@
-import { http, createConfig } from 'wagmi';
-import { avalancheFuji } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
+import { createConfig, http } from "wagmi";
+import { avalancheFuji } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
 
 export const config = createConfig({
   chains: [avalancheFuji],
-  connectors: [injected()],
+  connectors: [
+    injected({
+      shimDisconnect: true
+    })
+  ],
   transports: {
-    [avalancheFuji.id]: http(),
+    [avalancheFuji.id]: http()
   },
+  multiInjectedProviderDiscovery: false,
+  ssr: false
 });
