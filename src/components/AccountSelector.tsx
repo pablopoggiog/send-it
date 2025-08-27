@@ -25,7 +25,9 @@ export const AccountSelector = () => {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get AVAX balance for the current account
   const { data: avaxBalance } = useBalance({
@@ -37,6 +39,7 @@ export const AccountSelector = () => {
     if (!walletClient || !isConnected) return;
 
     setIsLoading(true);
+    const startTime = Date.now();
     try {
       // Try to get accounts from the wallet
       const walletAccounts = await walletClient.request({
@@ -92,7 +95,20 @@ export const AccountSelector = () => {
       setAccounts([fallbackAccount]);
       setSelectedAccount(fallbackAccount);
     } finally {
-      setIsLoading(false);
+      // Ensure minimum delay for entrance animation to complete (typically 300-500ms)
+      const elapsedTime = Date.now() - startTime;
+      const minDelay = 600; // 600ms to allow for entrance animation
+      const remainingDelay = Math.max(0, minDelay - elapsedTime);
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        setIsInitialLoad(false);
+        timeoutRef.current = null;
+      }, remainingDelay);
     }
   };
 
@@ -100,8 +116,18 @@ export const AccountSelector = () => {
   useEffect(() => {
     if (isConnected && walletClient) {
       fetchAccounts();
+    } else if (!isConnected && isInitialLoad) {
+      // Clear initial load state if not connected, with delay for entrance animation
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        setIsInitialLoad(false);
+        timeoutRef.current = null;
+      }, 600);
     }
-  }, [isConnected, walletClient, address]);
+  }, [isConnected, walletClient, address, isInitialLoad]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -117,6 +143,15 @@ export const AccountSelector = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
@@ -193,6 +228,33 @@ export const AccountSelector = () => {
     disconnect();
   };
 
+  // Show loading skeleton during initial load or any loading state
+  if (isInitialLoad || isLoading) {
+    return (
+      <div className="form-group">
+        <div className="label">Account</div>
+        <div className="token-selector">
+          <div className="wallet-status">
+            <div className="wallet-info">
+              <div className="status-indicator"></div>
+              <span className="wallet-address">
+                <span className="loading-skeleton">●●●●●●●●</span>
+              </span>
+            </div>
+          </div>
+          <div className="token-info">
+            <div className="token-name">
+              <span className="loading-skeleton">●●●●●●●●●●●●</span>
+            </div>
+            <div className="token-balance">
+              <span className="loading-skeleton">●●● AVAX</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isConnected) {
     return (
       <div className="form-group">
@@ -215,26 +277,6 @@ export const AccountSelector = () => {
           </button>
           <div className="token-info">
             <div className="token-name">Not connected</div>
-            <div className="token-balance">- AVAX</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="form-group">
-        <div className="label">Account</div>
-        <div className="token-selector">
-          <div className="wallet-status">
-            <div className="wallet-info">
-              <div className="status-indicator"></div>
-              <span className="wallet-address">Loading...</span>
-            </div>
-          </div>
-          <div className="token-info">
-            <div className="token-name">Loading accounts...</div>
             <div className="token-balance">- AVAX</div>
           </div>
         </div>

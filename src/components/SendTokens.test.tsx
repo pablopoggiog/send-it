@@ -55,9 +55,7 @@ describe("SendTokens", () => {
 
     expect(screen.getByText("Send tokens")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Send tokens to any address or contact on a given network."
-      )
+      screen.getByText("Send USDC to any address on the Fuji network.")
     ).toBeInTheDocument();
     expect(screen.getByText("Account")).toBeInTheDocument();
     expect(screen.getByText("Amount")).toBeInTheDocument();

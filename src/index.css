@@ -740,6 +740,22 @@ body::before {
   }
 }
 
+.loading-skeleton {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 .success-message {
   background: linear-gradient(
     135deg,
