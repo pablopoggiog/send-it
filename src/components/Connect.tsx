@@ -19,46 +19,55 @@ export const Connect = () => {
   };
 
   return (
-    <div className="header">
-      <div>
-        <h1 className="title">Send tokens</h1>
-        <p className="subtitle">
-          Send tokens to any address or contact on a given network.
-        </p>
-      </div>
+    <>
+      <div className="header">
+        <div>
+          <h1 className="title">Send Tokens</h1>
+          <p className="subtitle">
+            Send tokens to any address or contact on a given network
+          </p>
+        </div>
 
-      {account?.isConnected ? (
-        <div className="account-info">
-          <span>Connected: </span>
-          <span className="account-address">
-            {truncateAddress(account.address)}
-          </span>
+        {account?.isConnected ? (
+          <div className="account-info">
+            <span>Connected: </span>
+            <span className="account-address">
+              {truncateAddress(account.address)}
+            </span>
+            <button
+              type="button"
+              className="connect-button secondary"
+              onClick={handleDisconnect}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <span className="loading"></span>
+                  Disconnecting...
+                </>
+              ) : (
+                "Disconnect"
+              )}
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
-            className="connect-button secondary"
-            onClick={handleDisconnect}
+            className="connect-button"
+            onClick={handleConnect}
             disabled={isPending}
           >
-            Disconnect
+            {isPending ? (
+              <>
+                <span className="loading"></span>
+                Connecting...
+              </>
+            ) : (
+              "Connect Wallet"
+            )}
           </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="connect-button"
-          onClick={handleConnect}
-          disabled={isPending}
-        >
-          {isPending ? (
-            <>
-              <span className="loading"></span>
-              Connecting...
-            </>
-          ) : (
-            "Connect Wallet"
-          )}
-        </button>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
