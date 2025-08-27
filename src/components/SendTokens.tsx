@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import {
   useAccount,
@@ -31,7 +32,7 @@ export const SendTokens = () => {
 
   // Transaction state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [toastId, setToastId] = useState<string | null>(null);
 
   // Get USDC balance
   const { data: usdcBalance, refetch: refetchUsdcBalance } = useBalance({
@@ -146,7 +147,7 @@ export const SendTokens = () => {
     e.preventDefault();
 
     if (!isConnected || !address) {
-      alert("Please connect your wallet first");
+      toast.error("Please connect your wallet first");
       return;
     }
 
@@ -158,7 +159,10 @@ export const SendTokens = () => {
     }
 
     setIsSubmitting(true);
-    setSuccessMessage("");
+
+    // Start with initial loading toast
+    const id = toast.loading("Preparing transaction...");
+    setToastId(id);
 
     try {
       const amountInWei = parseUsdc(amount);
@@ -171,28 +175,59 @@ export const SendTokens = () => {
       });
     } catch (error) {
       console.error("Transaction error:", error);
-      alert("Failed to send transaction. Please try again.");
+      toast.error("Failed to send transaction. Please try again.", { id });
       setIsSubmitting(false);
+      setToastId(null);
     }
   };
 
+  // Handle transaction state changes
+  useEffect(() => {
+    if (!toastId) return;
+
+    if (isPending) {
+      toast.loading("Confirming transaction...", { id: toastId });
+    } else if (isConfirming) {
+      toast.loading("Processing transaction...", { id: toastId });
+    }
+  }, [isPending, isConfirming, toastId]);
+
   // Handle successful transaction
   useEffect(() => {
-    if (isSuccess && hash) {
-      setSuccessMessage(
-        `Transaction successful! View on explorer: https://subnets-test.avax.network/c-chain/tx/${hash}`
+    if (isSuccess && hash && toastId) {
+      toast.success(
+        (t) => (
+          <div>
+            <div>Transaction successful!</div>
+            <a
+              href={`https://subnets-test.avax.network/c-chain/tx/${hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#fff",
+                textDecoration: "underline",
+                fontSize: "12px"
+              }}
+            >
+              View on explorer
+            </a>
+          </div>
+        ),
+        { id: toastId, duration: 6000 }
       );
+
       setRecipient("");
       setAmount("");
       setSelectedPercentage(null);
       setIsSubmitting(false);
+      setToastId(null);
       refetchUsdcBalance();
     }
-  }, [isSuccess, hash, refetchUsdcBalance]);
+  }, [isSuccess, hash, toastId, refetchUsdcBalance]);
 
   // Handle transaction errors (rejections, cancellations, etc.)
   useEffect(() => {
-    if (error) {
+    if (error && toastId) {
       console.error("Transaction error:", error);
 
       // Check if the error is a user rejection
@@ -206,15 +241,17 @@ export const SendTokens = () => {
         errorMessage.includes("transaction canceled");
 
       if (isUserRejection) {
-        // User rejected the transaction, silently reset state
-        setIsSubmitting(false);
+        // User rejected the transaction, dismiss toast silently
+        toast.dismiss(toastId);
       } else {
-        // Other errors, show alert and reset state
-        alert("Failed to send transaction. Please try again.");
-        setIsSubmitting(false);
+        // Other errors, show error toast
+        toast.error("Transaction failed. Please try again.", { id: toastId });
       }
+
+      setIsSubmitting(false);
+      setToastId(null);
     }
-  }, [error]);
+  }, [error, toastId]);
 
   // Reset form when wallet disconnects
   useEffect(() => {
@@ -224,10 +261,13 @@ export const SendTokens = () => {
       setSelectedPercentage(null);
       setRecipientError("");
       setAmountError("");
-      setSuccessMessage("");
       setIsSubmitting(false);
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
     }
-  }, [isConnected]);
+  }, [isConnected, toastId]);
 
   const isFormValid = recipient && amount && !recipientError && !amountError;
   const isLoading = isPending || isConfirming || isSubmitting;
@@ -236,25 +276,6 @@ export const SendTokens = () => {
     <div className="container">
       <div className="card">
         <Connect />
-
-        {successMessage && (
-          <div className="success-message">
-            {successMessage.includes("View on explorer") ? (
-              <>
-                Transaction successful!{" "}
-                <a
-                  href={successMessage.split("View on explorer: ")[1]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View on explorer
-                </a>
-              </>
-            ) : (
-              successMessage
-            )}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit}>
           {/* Account Section */}
