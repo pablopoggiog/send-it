@@ -378,6 +378,10 @@ body::before {
   box-shadow: var(--shadow-md);
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .button::before {
@@ -770,7 +774,6 @@ body::before {
   border-radius: 50%;
   border-top-color: var(--text-primary);
   animation: spin 1s ease-in-out infinite;
-  vertical-align: middle;
 }
 
 @keyframes spin {
