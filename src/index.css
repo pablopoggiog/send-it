@@ -1180,7 +1180,10 @@ body::before {
     white-space: nowrap;
     max-width: 120px;
   }
+}
 
+/* Mobile-specific layout changes - only for very small screens */
+@media (max-width: 480px) {
   .amount-input {
     font-size: 1.25rem;
     text-align: center;
