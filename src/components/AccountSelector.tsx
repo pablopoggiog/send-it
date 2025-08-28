@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { formatEther } from "viem";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
@@ -92,6 +93,21 @@ export const AccountSelector = () => {
       }
     };
   }, [isConnected]);
+
+  // Handle connection errors
+  useEffect(() => {
+    if (error) {
+      console.error("Wallet connection error:", error);
+      
+      if (error.message === "User rejected request.") {
+        toast.error("Connection was cancelled");
+      } else if (error.message === "No provider was set") {
+        toast.error("No wallet provider found");
+      } else {
+        toast.error("Failed to connect wallet");
+      }
+    }
+  }, [error]);
 
   const handleConnect = async () => {
     try {
@@ -197,15 +213,6 @@ export const AccountSelector = () => {
             <div className="token-name">Not connected</div>
             <div className="token-balance">- AVAX</div>
           </div>
-          {error && (
-            <div className="error-message">
-              {error.message === "User rejected request."
-                ? "Connection was cancelled"
-                : error.message === "No provider was set"
-                ? "No wallet provider found"
-                : "Failed to connect wallet"}
-            </div>
-          )}
         </div>
       </div>
     );
