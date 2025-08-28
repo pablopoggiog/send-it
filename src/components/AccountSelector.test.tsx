@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WagmiProvider } from "wagmi";
+import { MockEthereum } from "../lib/testTypes";
 import { config } from "../lib/wagmiConfig";
 import { AccountSelector } from "./AccountSelector";
 
@@ -207,7 +208,7 @@ describe("<AccountSelector />", () => {
       value: {
         isCore: true,
         providers: []
-      },
+      } as MockEthereum,
       writable: true,
       configurable: true
     });
@@ -303,7 +304,7 @@ describe("<AccountSelector />", () => {
     // Mock hasEthereum to return true
     (hasEthereum as any).mockReturnValue(true);
     Object.defineProperty(window, "ethereum", {
-      value: { isCore: true },
+      value: { isCore: true } as MockEthereum,
       writable: true,
       configurable: true
     });
@@ -344,7 +345,7 @@ describe("<AccountSelector />", () => {
     // Mock hasEthereum to return true
     (hasEthereum as any).mockReturnValue(true);
     Object.defineProperty(window, "ethereum", {
-      value: { isCore: true },
+      value: { isCore: true } as MockEthereum,
       writable: true,
       configurable: true
     });

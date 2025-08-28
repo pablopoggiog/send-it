@@ -56,10 +56,10 @@ describe("<SendTokens />", () => {
     vi.clearAllMocks();
     mockWriteContract.mockClear();
     mockRefetchUsdcBalance.mockClear();
-    (toast.error as any).mockClear();
-    (toast.success as any).mockClear();
-    (toast.loading as any).mockClear();
-    (toast.dismiss as any).mockClear();
+    (toast.error as ReturnType<typeof vi.fn>).mockClear();
+    (toast.success as ReturnType<typeof vi.fn>).mockClear();
+    (toast.loading as ReturnType<typeof vi.fn>).mockClear();
+    (toast.dismiss as ReturnType<typeof vi.fn>).mockClear();
   });
 
   it("should render the form with all required elements", () => {
