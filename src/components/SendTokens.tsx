@@ -377,7 +377,23 @@ export const SendTokens = () => {
                 className="amount-input"
                 placeholder="0"
                 value={formData.amount}
-                onChange={(e) => handleAmountChange(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow numbers and one decimal point
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    handleAmountChange(value);
+                  }
+                }}
+                onKeyPress={(e) => {
+                  // Prevent non-numeric characters except decimal point
+                  if (!/[\d.]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                  // Prevent multiple decimal points
+                  if (e.key === "." && formData.amount.includes(".")) {
+                    e.preventDefault();
+                  }
+                }}
                 disabled={!isConnected}
               />
             </div>
