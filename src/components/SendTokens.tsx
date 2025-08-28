@@ -37,6 +37,24 @@ const isUserRejection = (errorMessage: string) => {
   );
 };
 
+const isGasEstimationError = (error: any) => {
+  const message = (error.message || "").toLowerCase();
+  const name = (error.name || "").toLowerCase();
+
+  // More specific detection of gas-related errors
+  return (
+    message.includes("unable to get transaction hash") ||
+    message.includes("insufficient funds for gas") ||
+    message.includes("gas estimation failed") ||
+    message.includes("out of gas") ||
+    message.includes("gas required exceeds allowance") ||
+    (name === "contractfunctionexecutionerror" &&
+      (message.includes("reverted") || message.includes("execution failed"))) ||
+    (name === "contractfunctionrevertederror" &&
+      (message.includes("reverted") || message.includes("execution failed")))
+  );
+};
+
 const getLoadingText = (
   isPending: boolean,
   isConfirming: boolean,
@@ -326,7 +344,15 @@ export const SendTokens = () => {
         toast.dismiss(toastId);
         toast.error("Transaction was cancelled by user");
       } else {
-        toast.error("Transaction failed. Please try again.", { id: toastId });
+        if (isGasEstimationError(error)) {
+          // Provide specific error message for gas estimation failures
+          toast.error(
+            `Transaction failed, likely due to gas estimation issues. You may need more AVAX for gas fees, or try a gas-free transaction if supported by your wallet.`,
+            { id: toastId }
+          );
+        } else {
+          toast.error("Transaction failed. Please try again.", { id: toastId });
+        }
       }
 
       setIsSubmitting(false);
@@ -363,8 +389,10 @@ export const SendTokens = () => {
 
           <div className="form-group">
             <div className="balance-info">
-              <div className="label">Amount</div>
-              <div className="balance-amount">Balance: {balanceDisplay}</div>
+              <div className="balance-info-row">
+                <div className="label">Amount</div>
+                <div className="balance-amount">Balance: {balanceDisplay}</div>
+              </div>
             </div>
 
             <div className="amount-input-container">
