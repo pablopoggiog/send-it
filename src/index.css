@@ -1074,6 +1074,7 @@ body::before {
   transition: all var(--transition-normal);
   font-size: 0.875rem;
   font-weight: bold;
+  line-height: 0;
 }
 
 .disconnect-button:hover:not(:disabled) {

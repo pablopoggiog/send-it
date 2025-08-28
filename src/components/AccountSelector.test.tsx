@@ -278,7 +278,10 @@ describe("<AccountSelector />", () => {
     screen.getByRole("button", { name: "Install Core Wallet" }).click();
 
     // Verify window.open was called with correct URL
-    expect(mockOpen).toHaveBeenCalledWith("https://core.app/", "_blank");
+    expect(mockOpen).toHaveBeenCalledWith(
+      "https://chromewebstore.google.com/detail/core-crypto-wallet-nft-ex/agoakfejjabomempkjlepdflaleeobhb",
+      "_blank"
+    );
   });
 
   it("should show error message when connection fails", async () => {

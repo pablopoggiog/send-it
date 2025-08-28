@@ -109,7 +109,10 @@ export const AccountSelector = () => {
   };
 
   const handleInstallCore = () => {
-    window.open("https://core.app/", "_blank");
+    window.open(
+      "https://chromewebstore.google.com/detail/core-crypto-wallet-nft-ex/agoakfejjabomempkjlepdflaleeobhb",
+      "_blank"
+    );
   };
 
   // Show loading skeleton during initial load
