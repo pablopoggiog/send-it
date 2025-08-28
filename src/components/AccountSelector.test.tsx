@@ -6,6 +6,16 @@ import { MockEthereum } from "../lib/testTypes";
 import { config } from "../lib/wagmiConfig";
 import { AccountSelector } from "./AccountSelector";
 
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn()
+  }
+}));
+
 // Mock wagmi hooks
 const mockConnect = vi.fn();
 const mockDisconnect = vi.fn();
@@ -285,6 +295,10 @@ describe("<AccountSelector />", () => {
   });
 
   it("should show error message when connection fails", async () => {
+    const toast = await import("react-hot-toast");
+    const mockToastError = vi.fn();
+    (toast.default.error as any) = mockToastError;
+
     (useAccount as any).mockReturnValue({
       address: undefined,
       isConnected: false
@@ -314,18 +328,20 @@ describe("<AccountSelector />", () => {
 
     renderWithProviders(<AccountSelector />);
 
-    // Wait for the initial loading to complete
+    // Wait for the error toast to be called
     await waitFor(
       () => {
-        expect(
-          screen.getByText("Connection was cancelled")
-        ).toBeInTheDocument();
+        expect(mockToastError).toHaveBeenCalledWith("Connection was cancelled");
       },
       { timeout: 1000 }
     );
   });
 
   it("should show different error messages for different error types", async () => {
+    const toast = await import("react-hot-toast");
+    const mockToastError = vi.fn();
+    (toast.default.error as any) = mockToastError;
+
     (useAccount as any).mockReturnValue({
       address: undefined,
       isConnected: false
@@ -355,12 +371,10 @@ describe("<AccountSelector />", () => {
 
     renderWithProviders(<AccountSelector />);
 
-    // Wait for the initial loading to complete
+    // Wait for the error toast to be called
     await waitFor(
       () => {
-        expect(
-          screen.getByText("No wallet provider found")
-        ).toBeInTheDocument();
+        expect(mockToastError).toHaveBeenCalledWith("No wallet provider found");
       },
       { timeout: 1000 }
     );
