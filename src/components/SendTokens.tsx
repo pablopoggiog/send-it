@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import {
   useAccount,
   useBalance,
+  usePublicClient,
   useWaitForTransactionReceipt,
   useWriteContract
 } from "wagmi";
 import { isValidAddress } from "../lib/address";
+import { createTransactionEventMonitor } from "../lib/transactionEvents";
 import type { FormErrors, SendTokensFormData } from "../lib/types";
 import {
   USDC_TOKEN_ABI,
@@ -50,6 +52,7 @@ const getLoadingText = (
 
 export const SendTokens = () => {
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
 
   // Form state
   const [formData, setFormData] = useState<SendTokensFormData>({
@@ -68,6 +71,13 @@ export const SendTokens = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastId, setToastId] = useState<string | null>(null);
 
+  // Event listening state
+  const [eventBasedSuccess, setEventBasedSuccess] = useState(false);
+  const [pendingTransaction, setPendingTransaction] = useState<{
+    recipient: string;
+    amount: bigint;
+  } | null>(null);
+
   // Wagmi hooks
   const { data: usdcBalance, refetch: refetchUsdcBalance } = useBalance({
     address,
@@ -79,6 +89,12 @@ export const SendTokens = () => {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash
   });
+
+  // Event monitoring setup
+  const eventMonitor = useMemo(() => {
+    if (!publicClient) return null;
+    return createTransactionEventMonitor(publicClient);
+  }, [publicClient]);
 
   // Validation functions
   const validateRecipient = useCallback(
@@ -233,6 +249,12 @@ export const SendTokens = () => {
           throw new Error("Invalid recipient address");
         }
 
+        // Store transaction details for event monitoring
+        setPendingTransaction({
+          recipient: formData.recipient,
+          amount: amountInWei
+        });
+
         writeContract({
           address: USDC_TOKEN_ADDRESS,
           abi: USDC_TOKEN_ABI,
@@ -261,11 +283,22 @@ export const SendTokens = () => {
     setFormData({ recipient: "", amount: "", selectedPercentage: null });
     setErrors({ recipient: "", amount: "" });
     setIsSubmitting(false);
+    setEventBasedSuccess(false);
+    setPendingTransaction(null);
+    // Stop event monitoring
+    if (eventMonitor) {
+      eventMonitor.stopMonitoring();
+    }
+  }, [eventMonitor]);
+
+  // Reset form and dismiss toast (separate function for when we want to dismiss)
+  const resetFormAndDismissToast = useCallback(() => {
+    resetForm();
     if (toastId) {
       toast.dismiss(toastId);
       setToastId(null);
     }
-  }, [toastId]);
+  }, [resetForm, toastId]);
 
   // Effects
   useEffect(() => {
@@ -278,12 +311,42 @@ export const SendTokens = () => {
     }
   }, [isPending, isConfirming, toastId]);
 
+  // Start event monitoring when hash becomes available
   useEffect(() => {
-    if (isSuccess && hash && toastId) {
+    if (hash && eventMonitor && address && pendingTransaction) {
+      eventMonitor.startMonitoring({
+        txHash: hash,
+        fromAddress: address,
+        toAddress: pendingTransaction.recipient,
+        amount: pendingTransaction.amount,
+        onSuccess: () => {
+          console.log("🎉 Event-based transaction confirmation!");
+          setEventBasedSuccess(true);
+        },
+        onError: (error: Error) => {
+          console.log(
+            "Event monitoring failed, falling back to polling:",
+            error
+          );
+          // Fallback to existing polling mechanism - no action needed
+        }
+      });
+    }
+  }, [hash, eventMonitor, address, pendingTransaction]); // Only depend on hash, eventMonitor, address, and pendingTransaction
+
+  useEffect(() => {
+    // Use event-based success or regular polling success
+    const transactionSuccessful = isSuccess || eventBasedSuccess;
+
+    if (transactionSuccessful && hash && toastId) {
+      const successMessage = eventBasedSuccess
+        ? "Transaction successful! (Event-based detection)"
+        : "Transaction successful!";
+
       toast.success(
         <div>
           <div style={{ marginBottom: "8px", fontWeight: "600" }}>
-            Transaction successful!
+            {successMessage}
           </div>
           <a
             href={`https://subnets-test.avax.network/c-chain/tx/${hash}`}
@@ -311,8 +374,18 @@ export const SendTokens = () => {
 
       resetForm();
       refetchUsdcBalance();
+
+      // Clear the toastId so we don't try to dismiss it later
+      setToastId(null);
     }
-  }, [isSuccess, hash, toastId, refetchUsdcBalance, resetForm]);
+  }, [
+    isSuccess,
+    eventBasedSuccess,
+    hash,
+    toastId,
+    refetchUsdcBalance,
+    resetForm
+  ]);
 
   useEffect(() => {
     if (error && toastId) {
@@ -325,16 +398,15 @@ export const SendTokens = () => {
         toast.error("Transaction failed. Please try again.", { id: toastId });
       }
 
-      setIsSubmitting(false);
-      setToastId(null);
+      resetFormAndDismissToast();
     }
-  }, [error, toastId]);
+  }, [error, toastId, resetFormAndDismissToast]);
 
   useEffect(() => {
     if (!isConnected) {
-      resetForm();
+      resetFormAndDismissToast();
     }
-  }, [isConnected, resetForm]);
+  }, [isConnected, resetFormAndDismissToast]);
 
   // Computed values
   const isFormValid =

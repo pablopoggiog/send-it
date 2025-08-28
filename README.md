@@ -76,6 +76,19 @@ pnpm dev
 - **Confirming**: Transaction is being processed by your wallet
 - **Processing**: Transaction is being mined on the blockchain
 - **Success**: Transaction completed with explorer link
+- **Event Detection**: Real-time blockchain event monitoring provides faster confirmations
+
+### Bonus Feature: Blockchain Event Listening ✅
+
+The app includes **real-time transaction status updates via blockchain event listening**:
+
+- **Faster Updates**: Event-based monitoring provides quicker transaction confirmations
+- **Reliable Fallback**: Existing polling system remains as a backup
+- **Automatic Integration**: Event monitoring starts automatically when transactions are submitted
+- **Smart Detection**: Shows "Event-based detection" when events are detected before polling
+- **Proper Cleanup**: Event listeners are automatically managed and cleaned up
+
+The event listening system monitors USDC Transfer events and provides immediate feedback when transactions are confirmed on the blockchain, significantly reducing the time between transaction submission and status confirmation.
 
 ## Testing
 
