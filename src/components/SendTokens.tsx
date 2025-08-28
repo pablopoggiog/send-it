@@ -314,6 +314,7 @@ export const SendTokens = () => {
 
       if (isUserRejection(error.message || "")) {
         toast.dismiss(toastId);
+        toast.error("Transaction was cancelled by user");
       } else {
         toast.error("Transaction failed. Please try again.", { id: toastId });
       }
