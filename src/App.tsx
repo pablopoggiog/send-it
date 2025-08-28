@@ -34,7 +34,7 @@ export function App() {
               minWidth: "300px"
             },
             success: {
-              duration: 10000,
+              duration: 7000,
               style: {
                 background: "rgba(16, 185, 129, 0.1)",
                 border: "1px solid rgba(16, 185, 129, 0.2)",
