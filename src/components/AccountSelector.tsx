@@ -7,10 +7,52 @@ import { truncateAddress } from "../lib/address";
 export const AccountSelector = () => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { connect, isPending } = useConnect();
+  const { connect, isPending, error } = useConnect();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isWalletAvailable, setIsWalletAvailable] = useState<boolean | null>(
+    null
+  );
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if wallet is available
+  useEffect(() => {
+    const checkWalletAvailability = () => {
+      // Check for Core wallet specifically
+      const isCoreAvailable =
+        typeof window !== "undefined" &&
+        (window.ethereum?.isCore ||
+          window.ethereum?.isAvalanche ||
+          window.ethereum?.providers?.some(
+            (provider: any) => provider.isCore || provider.isAvalanche
+          ));
+
+      // Check for any injected wallet
+      const isAnyWalletAvailable =
+        typeof window !== "undefined" &&
+        (window.ethereum || window.ethereum?.providers?.length > 0);
+
+      setIsWalletAvailable(isCoreAvailable || isAnyWalletAvailable);
+    };
+
+    checkWalletAvailability();
+
+    // Listen for wallet installation events
+    const handleWalletInstalled = () => {
+      checkWalletAvailability();
+    };
+
+    window.addEventListener("ethereum#initialized", handleWalletInstalled);
+    window.addEventListener("ethereum#accountsChanged", handleWalletInstalled);
+
+    return () => {
+      window.removeEventListener("ethereum#initialized", handleWalletInstalled);
+      window.removeEventListener(
+        "ethereum#accountsChanged",
+        handleWalletInstalled
+      );
+    };
+  }, []);
 
   // Get AVAX balance for the current account
   const { data: avaxBalance } = useBalance({
@@ -36,12 +78,23 @@ export const AccountSelector = () => {
     };
   }, [isConnected]);
 
-  const handleConnect = () => {
-    connect({ connector: injected() });
+  const handleConnect = async () => {
+    try {
+      setIsLoading(true);
+      await connect({ connector: injected() });
+    } catch (err) {
+      console.error("Failed to connect wallet:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDisconnect = () => {
     disconnect();
+  };
+
+  const handleInstallCore = () => {
+    window.open("https://core.app/", "_blank");
   };
 
   // Show loading skeleton during initial load
@@ -71,6 +124,37 @@ export const AccountSelector = () => {
     );
   }
 
+  // Show wallet not available state
+  if (isWalletAvailable === false) {
+    return (
+      <div className="form-group">
+        <div className="label">Account</div>
+        <div className="token-selector wallet-unavailable">
+          <div className="wallet-status">
+            <div className="wallet-info">
+              <div className="status-indicator unavailable"></div>
+              <span className="wallet-address">No wallet detected</span>
+            </div>
+          </div>
+          <div className="wallet-action">
+            <div className="wallet-message">
+              <div className="wallet-description">
+                Install Core Wallet to connect to Avalanche
+              </div>
+            </div>
+            <button
+              type="button"
+              className="install-wallet-button"
+              onClick={handleInstallCore}
+            >
+              Install Core Wallet
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isConnected) {
     return (
       <div className="form-group">
@@ -85,7 +169,7 @@ export const AccountSelector = () => {
             {isPending ? (
               <>
                 <span className="loading"></span>
-                Connecting...
+                <span>Connecting...</span>
               </>
             ) : (
               "Connect Wallet"
@@ -95,6 +179,15 @@ export const AccountSelector = () => {
             <div className="token-name">Not connected</div>
             <div className="token-balance">- AVAX</div>
           </div>
+          {error && (
+            <div className="error-message">
+              {error.message === "User rejected request."
+                ? "Connection was cancelled"
+                : error.message === "No provider was set"
+                ? "No wallet provider found"
+                : "Failed to connect wallet"}
+            </div>
+          )}
         </div>
       </div>
     );
