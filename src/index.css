@@ -1541,7 +1541,9 @@ body::before {
 }
 
 @keyframes loading-dots {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
     opacity: 0.5;
   }
@@ -1564,24 +1566,22 @@ body::before {
   border: 0;
 }
 
-/* Focus management for accessibility */
+/* Focus management for accessibility - using existing hover states instead of outlines */
 .amount-input:focus,
 .input:focus,
 .percentage-button:focus,
 .button:focus {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  /* Remove outline styles - using existing hover/active states for focus indication */
 }
 
-/* High contrast mode support */
+/* High contrast mode support - minimal focus indication */
 @media (prefers-contrast: high) {
   .amount-input:focus,
   .input:focus,
   .percentage-button:focus,
   .button:focus {
-    outline: 3px solid var(--text-primary);
-    outline-offset: 1px;
+    /* Minimal focus indication for high contrast mode */
+    box-shadow: inset 0 0 0 1px var(--text-primary);
   }
 }
 
@@ -1591,11 +1591,11 @@ body::before {
   .loading-dots::after {
     animation: none;
   }
-  
+
   .loading {
     animation: none;
   }
-  
+
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
