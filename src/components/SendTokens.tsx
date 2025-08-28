@@ -7,6 +7,8 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract
 } from "wagmi";
+import { isValidAddress } from "../lib/address";
+import type { FormErrors, SendTokensFormData } from "../lib/types";
 import {
   USDC_TOKEN_ABI,
   USDC_TOKEN_ADDRESS,
@@ -50,14 +52,14 @@ export const SendTokens = () => {
   const { address, isConnected } = useAccount();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SendTokensFormData>({
     recipient: "",
     amount: "",
-    selectedPercentage: null as number | null
+    selectedPercentage: null
   });
 
   // Validation state
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<FormErrors>({
     recipient: "",
     amount: ""
   });
@@ -227,11 +229,15 @@ export const SendTokens = () => {
 
       try {
         const amountInWei = parseUsdc(formData.amount);
+        if (!isValidAddress(formData.recipient)) {
+          throw new Error("Invalid recipient address");
+        }
+
         writeContract({
           address: USDC_TOKEN_ADDRESS,
           abi: USDC_TOKEN_ABI,
           functionName: "transfer",
-          args: [formData.recipient as `0x${string}`, amountInWei]
+          args: [formData.recipient, amountInWei]
         });
       } catch (error) {
         console.error("Transaction error:", error);
@@ -383,7 +389,7 @@ export const SendTokens = () => {
                 <button
                   key={percentage}
                   type="button"
-                  className={`percentage-button ${
+                  className={`percentage-button percentage-button-special ${
                     formData.selectedPercentage === percentage ? "active" : ""
                   }`}
                   onClick={() => handlePercentageClick(percentage)}

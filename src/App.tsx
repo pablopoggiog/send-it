@@ -52,7 +52,7 @@ export function App() {
               }
             },
             loading: {
-              duration: Infinity,
+              duration: Number.POSITIVE_INFINITY,
               style: {
                 background:
                   "linear-gradient(135deg, rgba(22, 22, 24, 0.95) 0%, rgba(30, 30, 32, 0.95) 100%)",

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { formatEther } from "viem";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { truncateAddress } from "../lib/address";
+import { isValidAddress, truncateAddress } from "../lib/address";
+import type { WalletProvider } from "../lib/types";
+import { hasEthereum } from "../lib/types";
 
 export const AccountSelector = () => {
   const { address, isConnected } = useAccount();
@@ -19,18 +21,31 @@ export const AccountSelector = () => {
   useEffect(() => {
     const checkWalletAvailability = () => {
       // Check for Core wallet specifically
-      const isCoreAvailable =
-        typeof window !== "undefined" &&
-        (window.ethereum?.isCore ||
-          window.ethereum?.isAvalanche ||
-          window.ethereum?.providers?.some(
-            (provider: any) => provider.isCore || provider.isAvalanche
-          ));
+      if (!hasEthereum(window)) {
+        setIsWalletAvailable(false);
+        return;
+      }
+
+      const ethereum = window.ethereum;
+
+      if (!ethereum) {
+        setIsWalletAvailable(false);
+        return;
+      }
+
+      const isCoreAvailable = Boolean(
+        ethereum.isCore ||
+          ethereum.isAvalanche ||
+          ethereum.providers?.some(
+            (provider: WalletProvider) =>
+              provider.isCore || provider.isAvalanche
+          )
+      );
 
       // Check for any injected wallet
-      const isAnyWalletAvailable =
-        typeof window !== "undefined" &&
-        (window.ethereum || window.ethereum?.providers?.length > 0);
+      const isAnyWalletAvailable = Boolean(
+        ethereum || ethereum.providers?.length
+      );
 
       setIsWalletAvailable(isCoreAvailable || isAnyWalletAvailable);
     };
@@ -201,7 +216,9 @@ export const AccountSelector = () => {
           <div className="wallet-info">
             <div className="status-indicator"></div>
             <span className="wallet-address">
-              {address ? truncateAddress(address as `0x${string}`) : ""}
+              {address && isValidAddress(address)
+                ? truncateAddress(address)
+                : ""}
             </span>
           </div>
           <button
@@ -216,7 +233,9 @@ export const AccountSelector = () => {
         </div>
         <div className="token-info">
           <div className="token-name">
-            {address ? truncateAddress(address as `0x${string}`) : "Unknown"}
+            {address && isValidAddress(address)
+              ? truncateAddress(address)
+              : "Unknown"}
           </div>
           <div className="token-balance">
             {avaxBalance ? `${formatEther(avaxBalance.value)} AVAX` : "- AVAX"}
