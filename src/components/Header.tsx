@@ -1,10 +1,9 @@
 /**
  * Component for displaying the app header with title and subtitle.
  */
-export const Connect = () => {
+export const Header = () => {
   return (
     <>
-      {/* App Header */}
       <div className="app-header">
         <div className="header-content">
           <h1 className="title">Send Tokens</h1>

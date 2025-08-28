@@ -169,7 +169,7 @@ pnpm preview
 
 ### Common Issues
 
-1. **"Invalid C-Chain (EVM) address format"**
+1. **"Invalid Avalanche (C-Chain) address format"**
    - Ensure the address starts with `0x` and is 42 characters long
    - Check for typos in the address
 

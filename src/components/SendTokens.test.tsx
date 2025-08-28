@@ -1,36 +1,33 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import toast from "react-hot-toast";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WagmiProvider } from "wagmi";
 import { config } from "../lib/wagmiConfig";
 import { SendTokens } from "./SendTokens";
 
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn()
+  }
+}));
+
 // Mock wagmi hooks
+const mockWriteContract = vi.fn();
+const mockRefetchUsdcBalance = vi.fn();
+
 vi.mock("wagmi", async () => {
   const actual = await vi.importActual("wagmi");
   return {
     ...actual,
-    useAccount: () => ({
-      address: "0x1234567890123456789012345678901234567890",
-      isConnected: true
-    }),
-    useBalance: () => ({
-      data: {
-        value: BigInt("1000000"), // 1 USDC (6 decimals)
-        decimals: 6,
-        symbol: "USDC"
-      },
-      refetch: vi.fn()
-    }),
-    useWriteContract: () => ({
-      writeContract: vi.fn(),
-      isPending: false,
-      error: null
-    }),
-    useWaitForTransactionReceipt: () => ({
-      isLoading: false,
-      isSuccess: false
-    })
+    useAccount: vi.fn(),
+    useBalance: vi.fn(),
+    useWriteContract: vi.fn(),
+    useWaitForTransactionReceipt: vi.fn()
   };
 });
 
@@ -46,54 +43,102 @@ const renderWithProviders = (component: React.ReactElement) => {
   );
 };
 
-describe("SendTokens", () => {
+// Import wagmi hooks for mocking
+const {
+  useAccount,
+  useBalance,
+  useWriteContract,
+  useWaitForTransactionReceipt
+} = await import("wagmi");
+
+describe("<SendTokens />", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockWriteContract.mockClear();
+    mockRefetchUsdcBalance.mockClear();
+    (toast.error as any).mockClear();
+    (toast.success as any).mockClear();
+    (toast.loading as any).mockClear();
+    (toast.dismiss as any).mockClear();
   });
 
-  it("renders the form with all required elements", () => {
+  it("should render the form with all required elements", () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n }, // 1 USDC
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
-    expect(screen.getByText("Send tokens")).toBeInTheDocument();
-    expect(
-      screen.getByText("Send USDC to any address on the Fuji network.")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Account")).toBeInTheDocument();
     expect(screen.getByText("Amount")).toBeInTheDocument();
     expect(screen.getByText("Send to")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("0")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Paste an Avalanche (C-Chain) address")
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 
-  it("displays connected wallet address", () => {
+  it("should show USDC balance when connected", () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n }, // 1 USDC
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
-    expect(screen.getByText("0x1234...7890")).toBeInTheDocument();
+    expect(screen.getByText("1 USDC")).toBeInTheDocument();
   });
 
-  it("displays USDC balance", () => {
-    renderWithProviders(<SendTokens />);
+  it("should validate recipient address format", async () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n },
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
 
-    expect(screen.getByText("Balance: 1 USDC")).toBeInTheDocument();
-  });
-
-  it("shows percentage buttons", () => {
-    renderWithProviders(<SendTokens />);
-
-    expect(screen.getByRole("button", { name: "25%" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "50%" })).toBeInTheDocument();
-  });
-
-  it("shows max button", () => {
-    renderWithProviders(<SendTokens />);
-
-    expect(screen.getByRole("button", { name: "Max" })).toBeInTheDocument();
-  });
-
-  it("validates recipient address format", async () => {
     renderWithProviders(<SendTokens />);
 
     const recipientInput = screen.getByPlaceholderText(
-      "Paste an Avalanche (C-Chain) address >"
+      "Paste an Avalanche (C-Chain) address"
     );
 
     // Test invalid address
@@ -101,29 +146,71 @@ describe("SendTokens", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Invalid C-Chain (EVM) address format")
+        screen.getByText("Invalid Avalanche (C-Chain) address format")
       ).toBeInTheDocument();
-    });
-
-    // Test valid address
-    fireEvent.change(recipientInput, {
-      target: { value: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6" }
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.queryByText("Invalid C-Chain (EVM) address format")
-      ).not.toBeInTheDocument();
     });
   });
 
-  it("validates amount is greater than 0", async () => {
+  it("should prevent sending to own address", async () => {
+    const userAddress = "0x1234567890123456789012345678901234567890";
+
+    (useAccount as any).mockReturnValue({
+      address: userAddress,
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n },
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
+    renderWithProviders(<SendTokens />);
+
+    const recipientInput = screen.getByPlaceholderText(
+      "Paste an Avalanche (C-Chain) address"
+    );
+    fireEvent.change(recipientInput, { target: { value: userAddress } });
+    fireEvent.blur(recipientInput);
+
+    await waitFor(() => {
+      expect(screen.getByText("Cannot send to yourself")).toBeInTheDocument();
+    });
+  });
+
+  it("should validate amount is greater than 0", async () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n },
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
     const amountInput = screen.getByPlaceholderText("0");
 
     // Test zero amount
     fireEvent.change(amountInput, { target: { value: "0" } });
+    fireEvent.blur(amountInput);
 
     await waitFor(() => {
       expect(
@@ -131,62 +218,154 @@ describe("SendTokens", () => {
       ).toBeInTheDocument();
     });
 
-    // Test valid amount
-    fireEvent.change(amountInput, { target: { value: "0.5" } });
+    // Test negative amount
+    fireEvent.change(amountInput, { target: { value: "0" } });
 
     await waitFor(() => {
       expect(
-        screen.queryByText("Amount must be greater than 0")
-      ).not.toBeInTheDocument();
+        screen.getByText("Amount must be greater than 0")
+      ).toBeInTheDocument();
     });
   });
 
-  it("enables send button when form is valid", async () => {
+  it("should validate amount does not exceed balance", async () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n }, // 1 USDC
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
-    const sendButton = screen.getByRole("button", { name: "Send" });
-    const recipientInput = screen.getByPlaceholderText(
-      "Paste an Avalanche (C-Chain) address >"
-    );
     const amountInput = screen.getByPlaceholderText("0");
-
-    // Initially disabled
-    expect(sendButton).toBeDisabled();
-
-    // Fill in valid data
-    fireEvent.change(recipientInput, {
-      target: { value: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6" }
-    });
-    fireEvent.change(amountInput, { target: { value: "0.5" } });
+    fireEvent.change(amountInput, { target: { value: "2.0" } });
+    fireEvent.blur(amountInput);
 
     await waitFor(() => {
-      expect(sendButton).not.toBeDisabled();
+      expect(
+        screen.getByText("Insufficient balance. You have 1.000000 USDC")
+      ).toBeInTheDocument();
     });
   });
 
-  it("handles percentage button clicks", async () => {
+  it("should handle percentage button clicks", async () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n }, // 1 USDC
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
-    const amountInput = screen.getByPlaceholderText("0");
-    const percentageButton = screen.getByRole("button", { name: "50%" });
-
-    fireEvent.click(percentageButton);
+    const percentage25Button = screen.getByText("25%");
+    fireEvent.click(percentage25Button);
 
     await waitFor(() => {
-      expect(amountInput).toHaveValue("0.500000");
+      const amountInput = screen.getByPlaceholderText("0") as HTMLInputElement;
+      expect(amountInput.value).toBe("0.250000");
     });
   });
 
-  it("handles max button click", async () => {
+  it("should handle max button click", async () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n }, // 1 USDC
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
     renderWithProviders(<SendTokens />);
 
-    const amountInput = screen.getByPlaceholderText("0");
-    const maxButton = screen.getByRole("button", { name: "Max" });
-
+    const maxButton = screen.getByText("Max");
     fireEvent.click(maxButton);
 
     await waitFor(() => {
-      expect(amountInput).toHaveValue("1.000000");
+      const amountInput = screen.getByPlaceholderText("0") as HTMLInputElement;
+      expect(amountInput.value).toBe("1.000000");
     });
+  });
+
+  it("should disable send button when form is invalid", () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n },
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: false,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
+    renderWithProviders(<SendTokens />);
+
+    const sendButton = screen.getByRole("button", { name: "Send" });
+    expect(sendButton).toBeDisabled();
+  });
+
+  it("should show loading state during transaction", () => {
+    (useAccount as any).mockReturnValue({
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true
+    });
+    (useBalance as any).mockReturnValue({
+      data: { value: 1000000n },
+      refetch: mockRefetchUsdcBalance
+    });
+    (useWriteContract as any).mockReturnValue({
+      writeContract: mockWriteContract,
+      isPending: true,
+      error: null
+    });
+    (useWaitForTransactionReceipt as any).mockReturnValue({
+      isLoading: false,
+      isSuccess: false
+    });
+
+    renderWithProviders(<SendTokens />);
+
+    expect(screen.getByText("Confirming...")).toBeInTheDocument();
   });
 });

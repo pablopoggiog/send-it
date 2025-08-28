@@ -14,7 +14,7 @@ import {
   parseUsdc
 } from "../lib/usdc";
 import { AccountSelector } from "./AccountSelector";
-import { Connect } from "./Connect";
+import { Header } from "./Header";
 
 export const SendTokens = () => {
   const { address, isConnected } = useAccount();
@@ -55,7 +55,7 @@ export const SendTokens = () => {
       return false;
     }
     if (!isAddress(value)) {
-      setRecipientError("Invalid C-Chain (EVM) address format");
+      setRecipientError("Invalid Avalanche (C-Chain) address format");
       return false;
     }
     if (value.toLowerCase() === address?.toLowerCase()) {
@@ -285,7 +285,7 @@ export const SendTokens = () => {
   return (
     <div className="container">
       <div className="card">
-        <Connect />
+        <Header />
 
         <form onSubmit={handleSubmit}>
           {/* Account Section */}
@@ -373,7 +373,7 @@ export const SendTokens = () => {
             <input
               type="text"
               className={`input ${recipientError ? "error" : ""}`}
-              placeholder="Paste an Avalanche (C-Chain) address >"
+              placeholder="Paste an Avalanche (C-Chain) address"
               value={recipient}
               onChange={(e) => handleRecipientChange(e.target.value)}
               disabled={!isConnected}
