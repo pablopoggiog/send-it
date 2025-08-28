@@ -1,224 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { formatEther } from "viem";
-import {
-  useAccount,
-  useBalance,
-  useConnect,
-  useDisconnect,
-  useWalletClient
-} from "wagmi";
+import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { truncateAddress } from "../lib/address";
 
-interface Account {
-  address: string;
-  name: string;
-  balance: string;
-}
-
 export const AccountSelector = () => {
   const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const { disconnect } = useDisconnect();
   const { connect, isPending } = useConnect();
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get AVAX balance for the current account
   const { data: avaxBalance } = useBalance({
-    address: address as `0x${string}`
+    address: address
   });
 
-  // Fetch all accounts from the wallet
-  const fetchAccounts = async () => {
-    if (!walletClient || !isConnected) return;
-
-    setIsLoading(true);
-    const startTime = Date.now();
-    try {
-      // Try to get accounts from the wallet
-      const walletAccounts = await walletClient.request({
-        method: "eth_accounts"
-      });
-
-      // If we get multiple accounts, create account objects
-      if (Array.isArray(walletAccounts) && walletAccounts.length > 0) {
-        const accountPromises = walletAccounts.map(async (acc) => {
-          // Get balance for each account
-          const balance = await walletClient.request({
-            method: "eth_getBalance" as any,
-            params: [acc, "latest"]
-          });
-
-          return {
-            address: acc,
-            name: truncateAddress(acc as `0x${string}`),
-            balance: `${formatEther(BigInt(balance as string))} AVAX`
-          };
-        });
-
-        const fetchedAccounts = await Promise.all(accountPromises);
-        setAccounts(fetchedAccounts);
-
-        // Set the current account as selected
-        const currentAccount = fetchedAccounts.find(
-          (acc) => acc.address.toLowerCase() === address?.toLowerCase()
-        );
-        setSelectedAccount(currentAccount || fetchedAccounts[0]);
-      } else {
-        // Fallback to single account if wallet doesn't support multiple accounts
-        const singleAccount: Account = {
-          address: address || "",
-          name: truncateAddress(address || ("0x" as `0x${string}`)),
-          balance: avaxBalance
-            ? `${formatEther(avaxBalance.value)} AVAX`
-            : "- AVAX"
-        };
-        setAccounts([singleAccount]);
-        setSelectedAccount(singleAccount);
-      }
-    } catch (error) {
-      console.error("Error fetching accounts:", error);
-      // Fallback to single account on error
-      const fallbackAccount: Account = {
-        address: address || "",
-        name: truncateAddress(address || ("0x" as `0x${string}`)),
-        balance: avaxBalance
-          ? `${formatEther(avaxBalance.value)} AVAX`
-          : "- AVAX"
-      };
-      setAccounts([fallbackAccount]);
-      setSelectedAccount(fallbackAccount);
-    } finally {
-      // Ensure minimum delay for entrance animation to complete (typically 300-500ms)
-      const elapsedTime = Date.now() - startTime;
-      const minDelay = 600; // 600ms to allow for entrance animation
-      const remainingDelay = Math.max(0, minDelay - elapsedTime);
-
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        setIsLoading(false);
-        setIsInitialLoad(false);
-        timeoutRef.current = null;
-      }, remainingDelay);
+  // Handle initial load state
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-  };
 
-  // Fetch accounts when wallet connects or changes
-  useEffect(() => {
-    if (isConnected && walletClient) {
-      fetchAccounts();
-    } else if (!isConnected && isInitialLoad) {
-      // Clear initial load state if not connected, with delay for entrance animation
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+    timeoutRef.current = setTimeout(() => {
+      setIsInitialLoad(false);
+      setIsLoading(false);
+      timeoutRef.current = null;
+    }, 600); // Allow time for entrance animation
 
-      timeoutRef.current = setTimeout(() => {
-        setIsInitialLoad(false);
-        timeoutRef.current = null;
-      }, 600);
-    }
-  }, [isConnected, walletClient, address, isInitialLoad]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
-
-  const handleAccountSelect = async (account: Account) => {
-    // Only allow switching if it's a different account
-    if (selectedAccount?.address === account.address) {
-      setIsOpen(false);
-      return;
-    }
-
-    setSelectedAccount(account);
-    setIsOpen(false);
-
-    // Try to switch accounts if the wallet supports it
-    try {
-      if (walletClient) {
-        // Method 1: Try wallet_switchEthereumChain (for some wallets)
-        try {
-          await walletClient.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0xa869" }] // Fuji testnet
-          });
-        } catch (switchError) {
-          console.log("Chain switching not needed or not supported");
-        }
-
-        // Method 2: Request account switching
-        await walletClient.request({
-          method: "wallet_requestPermissions",
-          params: [
-            {
-              eth_accounts: {}
-            }
-          ]
-        });
-
-        // Method 3: Try to request specific account (some wallets support this)
-        try {
-          await walletClient.request({
-            method: "eth_requestAccounts"
-          });
-        } catch (requestError) {
-          console.log("Specific account request not supported");
-        }
-
-        // Refresh accounts after switching
-        setTimeout(() => {
-          fetchAccounts();
-        }, 1000); // Give wallet time to update
-      }
-    } catch (error) {
-      console.log(
-        "Account switching not supported by this wallet or user denied"
-      );
-      // Revert selection if switching failed
-      const currentAccount = accounts.find(
-        (acc) => acc.address.toLowerCase() === address?.toLowerCase()
-      );
-      setSelectedAccount(currentAccount || accounts[0]);
-    }
-  };
-
-  const toggleDropdown = () => {
-    if (isConnected && accounts.length > 1) {
-      setIsOpen(!isOpen);
-    }
-  };
+  }, [isConnected]);
 
   const handleConnect = () => {
     connect({ connector: injected() });
@@ -228,7 +44,7 @@ export const AccountSelector = () => {
     disconnect();
   };
 
-  // Show loading skeleton during initial load or any loading state
+  // Show loading skeleton during initial load
   if (isInitialLoad || isLoading) {
     return (
       <div className="form-group">
@@ -287,95 +103,32 @@ export const AccountSelector = () => {
   return (
     <div className="form-group">
       <div className="label">Account</div>
-      <div className="account-selector-container" ref={dropdownRef}>
-        <div
-          className={`token-selector account-selector ${
-            accounts.length > 1 ? "clickable" : ""
-          }`}
-          onClick={toggleDropdown}
-        >
-          <div className="wallet-status">
-            <div className="wallet-info">
-              <div className="status-indicator"></div>
-              <span className="wallet-address">
-                {selectedAccount
-                  ? truncateAddress(selectedAccount.address as `0x${string}`)
-                  : ""}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="disconnect-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDisconnect();
-              }}
-              disabled={isPending}
-              title="Disconnect Wallet"
-            >
-              {isPending ? <span className="loading"></span> : "×"}
-            </button>
+      <div className="token-selector">
+        <div className="wallet-status">
+          <div className="wallet-info">
+            <div className="status-indicator"></div>
+            <span className="wallet-address">
+              {address ? truncateAddress(address as `0x${string}`) : ""}
+            </span>
           </div>
-          <div className="token-info">
-            <div className="token-name">
-              {truncateAddress(
-                (selectedAccount?.address ||
-                  address ||
-                  "0x0000000000000000000000000000000000000000") as `0x${string}`
-              )}
-            </div>
-            <div className="token-balance">
-              {selectedAccount?.balance || "- AVAX"}
-            </div>
-          </div>
-          {accounts.length > 1 && (
-            <div className="dropdown-arrow">{isOpen ? "▲" : "▼"}</div>
-          )}
+          <button
+            type="button"
+            className="disconnect-button"
+            onClick={handleDisconnect}
+            disabled={isPending}
+            title="Disconnect Wallet"
+          >
+            {isPending ? <span className="loading"></span> : "×"}
+          </button>
         </div>
-
-        {isOpen && accounts.length > 1 && (
-          <div className="account-dropdown">
-            <div className="dropdown-header">
-              <div className="dropdown-title">avalanche core</div>
-              <div className="dropdown-arrow">▲</div>
-            </div>
-
-            <div className="search-container">
-              <div className="search-icon">🔍</div>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search..."
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-
-            <div className="account-list">
-              {accounts.map((account) => (
-                <div
-                  key={account.address}
-                  className={`account-item ${
-                    selectedAccount?.address === account.address
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() => handleAccountSelect(account)}
-                >
-                  <div className="account-item-info">
-                    <div className="account-item-name">{account.name}</div>
-                    <div className="account-item-address">
-                      {truncateAddress(account.address as `0x${string}`)}
-                    </div>
-                  </div>
-                  <div className="account-item-balance">{account.balance}</div>
-                  {selectedAccount?.address === account.address && (
-                    <div className="account-item-check">✓</div>
-                  )}
-                </div>
-              ))}
-            </div>
+        <div className="token-info">
+          <div className="token-name">
+            {address ? truncateAddress(address as `0x${string}`) : "Unknown"}
           </div>
-        )}
+          <div className="token-balance">
+            {avaxBalance ? `${formatEther(avaxBalance.value)} AVAX` : "- AVAX"}
+          </div>
+        </div>
       </div>
     </div>
   );
