@@ -257,15 +257,18 @@ export const SendTokens = () => {
   );
 
   // Reset form
-  const resetForm = useCallback(() => {
-    setFormData({ recipient: "", amount: "", selectedPercentage: null });
-    setErrors({ recipient: "", amount: "" });
-    setIsSubmitting(false);
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
-  }, [toastId]);
+  const resetForm = useCallback(
+    (dismissToast = true) => {
+      setFormData({ recipient: "", amount: "", selectedPercentage: null });
+      setErrors({ recipient: "", amount: "" });
+      setIsSubmitting(false);
+      if (dismissToast && toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
+    },
+    [toastId]
+  );
 
   // Effects
   useEffect(() => {
@@ -309,7 +312,8 @@ export const SendTokens = () => {
         { id: toastId }
       );
 
-      resetForm();
+      // Reset form without dismissing the success toast
+      resetForm(false);
       refetchUsdcBalance();
     }
   }, [isSuccess, hash, toastId, refetchUsdcBalance, resetForm]);
