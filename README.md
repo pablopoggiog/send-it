@@ -170,21 +170,6 @@ export const USDC_DECIMALS = 6;
 - Safari
 - Edge
 
-## 🚨 Common Issues
-
-### "Invalid address format"
-- Ensure address starts with `0x` and is 42 characters
-- Check for typos or extra spaces
-
-### "Insufficient balance"
-- Verify USDC balance in wallet
-- Ensure sufficient AVAX for gas fees
-
-### "Transaction failed"
-- Check network connection
-- Verify wallet is connected to Fuji testnet
-- Ensure sufficient gas fees
-
 ## 📄 License
 
 MIT License - see LICENSE file for details.
