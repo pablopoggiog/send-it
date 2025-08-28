@@ -245,6 +245,14 @@ export const AccountSelector = () => {
           </div>
         </div>
       </div>
+
+      {avaxBalance && parseFloat(formatEther(avaxBalance.value)) < 0.001 && (
+        <div className="avax-balance">
+          <span className="info-text">
+            Low balance - may need more for gas fees
+          </span>
+        </div>
+      )}
     </div>
   );
 };

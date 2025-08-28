@@ -455,10 +455,16 @@ body::before {
 
 .balance-info {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 1rem;
   padding: 0.5rem 0;
+}
+
+.balance-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .balance-amount {
@@ -469,6 +475,24 @@ body::before {
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.avax-balance {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  transition: all var(--transition-normal);
+}
+
+.info-text {
+  color: var(--accent-warning);
+  font-weight: 500;
+  font-style: italic;
 }
 
 .percentage-buttons {
