@@ -98,7 +98,7 @@ export const AccountSelector = () => {
   useEffect(() => {
     if (error) {
       console.error("Wallet connection error:", error);
-      
+
       if (error.message === "User rejected request.") {
         toast.error("Connection was cancelled");
       } else if (error.message === "No provider was set") {
@@ -162,11 +162,16 @@ export const AccountSelector = () => {
   if (isWalletAvailable === false) {
     return (
       <div className="form-group">
-        <div className="label">Account</div>
+        <div className="label" id="account-label">
+          Account
+        </div>
         <div className="token-selector wallet-unavailable">
           <div className="wallet-status">
             <div className="wallet-info">
-              <div className="status-indicator unavailable"></div>
+              <div
+                className="status-indicator unavailable"
+                aria-hidden="true"
+              ></div>
               <span className="wallet-address">No wallet detected</span>
             </div>
           </div>
@@ -180,6 +185,8 @@ export const AccountSelector = () => {
               type="button"
               className="install-wallet-button"
               onClick={handleInstallCore}
+              aria-labelledby="account-label"
+              aria-label="Install Core Wallet to connect to Avalanche network"
             >
               Install Core Wallet
             </button>
@@ -192,17 +199,23 @@ export const AccountSelector = () => {
   if (!isConnected) {
     return (
       <div className="form-group">
-        <div className="label">Account</div>
+        <div className="label" id="account-label">
+          Account
+        </div>
         <div className="token-selector">
           <button
             type="button"
             className="connect-wallet-button"
             onClick={handleConnect}
             disabled={isPending}
+            aria-labelledby="account-label"
+            aria-label={
+              isPending ? "Connecting wallet" : "Connect your Web3 wallet"
+            }
           >
             {isPending ? (
               <>
-                <span className="loading"></span>
+                <span className="loading" aria-hidden="true"></span>
                 <span>Connecting...</span>
               </>
             ) : (
@@ -220,12 +233,17 @@ export const AccountSelector = () => {
 
   return (
     <div className="form-group">
-      <div className="label">Account</div>
+      <div className="label" id="account-label">
+        Account
+      </div>
       <div className="token-selector">
         <div className="wallet-status">
           <div className="wallet-info">
-            <div className="status-indicator"></div>
-            <span className="wallet-address">
+            <div className="status-indicator" aria-hidden="true"></div>
+            <span
+              className="wallet-address"
+              aria-label={`Connected wallet address: ${address}`}
+            >
               {address && isValidAddress(address)
                 ? truncateAddress(address)
                 : ""}
@@ -236,9 +254,14 @@ export const AccountSelector = () => {
             className="disconnect-button"
             onClick={handleDisconnect}
             disabled={isPending}
-            title="Disconnect Wallet"
+            aria-label="Disconnect wallet"
+            aria-labelledby="account-label"
           >
-            {isPending ? <span className="loading"></span> : "×"}
+            {isPending ? (
+              <span className="loading" aria-hidden="true"></span>
+            ) : (
+              "×"
+            )}
           </button>
         </div>
         <div className="token-info">
@@ -247,14 +270,19 @@ export const AccountSelector = () => {
               ? truncateAddress(address)
               : "Unknown"}
           </div>
-          <div className="token-balance">
+          <div
+            className="token-balance"
+            aria-label={`AVAX balance: ${
+              avaxBalance ? formatEther(avaxBalance.value) : "0"
+            } AVAX`}
+          >
             {avaxBalance ? `${formatEther(avaxBalance.value)} AVAX` : "- AVAX"}
           </div>
         </div>
       </div>
 
       {avaxBalance && parseFloat(formatEther(avaxBalance.value)) < 0.001 && (
-        <div className="avax-balance">
+        <div className="avax-balance" role="alert" aria-live="polite">
           <span className="info-text">
             Low balance - may need more for gas fees
           </span>

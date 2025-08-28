@@ -1487,3 +1487,118 @@ body::before {
   align-items: center;
   justify-content: center;
 }
+
+/* Loading states and animations */
+.balance-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.loading-dots {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.loading-dots::before,
+.loading-dots::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: loading-dots 1.4s infinite ease-in-out both;
+}
+
+.loading-dots::before {
+  left: 0;
+  animation-delay: -0.32s;
+}
+
+.loading-dots::after {
+  right: 0;
+  animation-delay: 0.32s;
+}
+
+.loading-dots::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  animation: loading-dots 1.4s infinite ease-in-out both;
+  animation-delay: 0s;
+}
+
+@keyframes loading-dots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Screen reader utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus management for accessibility */
+.amount-input:focus,
+.input:focus,
+.percentage-button:focus,
+.button:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .amount-input:focus,
+  .input:focus,
+  .percentage-button:focus,
+  .button:focus {
+    outline: 3px solid var(--text-primary);
+    outline-offset: 1px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots::before,
+  .loading-dots::after {
+    animation: none;
+  }
+  
+  .loading {
+    animation: none;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

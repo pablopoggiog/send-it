@@ -87,7 +87,11 @@ export const SendTokens = () => {
   const [toastId, setToastId] = useState<string | null>(null);
 
   // Wagmi hooks
-  const { data: usdcBalance, refetch: refetchUsdcBalance } = useBalance({
+  const {
+    data: usdcBalance,
+    refetch: refetchUsdcBalance,
+    isLoading: isLoadingUsdcBalance
+  } = useBalance({
     address,
     token: USDC_TOKEN_ADDRESS
   });
@@ -379,36 +383,68 @@ export const SendTokens = () => {
     formData.amount ===
       (usdcBalance ? parseFloat(formatUsdc(usdcBalance.value)).toFixed(6) : "");
 
+  // Accessibility: Generate unique IDs for form elements
+  const amountInputId = "amount-input";
+  const recipientInputId = "recipient-input";
+  const amountErrorId = "amount-error";
+  const recipientErrorId = "recipient-error";
+  const balanceInfoId = "balance-info";
+
   return (
     <div className="container">
       <div className="card">
         <Header />
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="form" aria-label="Send USDC tokens">
           <AccountSelector />
 
           <div className="form-group">
-            <div className="balance-info">
+            <div className="balance-info" id={balanceInfoId}>
               <div className="balance-info-row">
                 <div className="label">Amount</div>
-                <div className="balance-amount">Balance: {balanceDisplay}</div>
+                <div className="balance-amount" aria-live="polite">
+                  {isLoadingUsdcBalance ? (
+                    <span className="balance-loading">
+                      <span className="loading-dots"></span>
+                      Loading balance...
+                    </span>
+                  ) : (
+                    `Balance: ${balanceDisplay}`
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="amount-input-container">
               <div className="token-selector">
-                <div className="token-logo">U</div>
+                <div className="token-logo" aria-hidden="true">
+                  U
+                </div>
                 <div className="token-info">
                   <div className="token-name">USDC</div>
-                  <div className="token-balance">{balanceDisplay}</div>
+                  <div className="token-balance" aria-live="polite">
+                    {isLoadingUsdcBalance ? (
+                      <span className="balance-loading">
+                        <span className="loading-dots"></span>
+                        Loading...
+                      </span>
+                    ) : (
+                      balanceDisplay
+                    )}
+                  </div>
                 </div>
               </div>
 
               <input
+                id={amountInputId}
                 type="text"
                 className="amount-input"
                 placeholder="0"
                 value={formData.amount}
+                aria-label="USDC amount to send"
+                aria-describedby={`${amountErrorId} ${balanceInfoId}`}
+                aria-invalid={!!errors.amount}
+                aria-required="true"
                 onChange={(e) => {
                   const value = e.target.value;
                   // Only allow numbers and one decimal point
@@ -430,9 +466,15 @@ export const SendTokens = () => {
               />
             </div>
 
-            <div className="usd-value">$0 USD</div>
+            <div className="usd-value" aria-hidden="true">
+              $0 USD
+            </div>
 
-            <div className="percentage-buttons">
+            <div
+              className="percentage-buttons"
+              role="group"
+              aria-label="Quick amount selection"
+            >
               {[25, 50].map((percentage) => (
                 <button
                   key={percentage}
@@ -441,7 +483,11 @@ export const SendTokens = () => {
                     formData.selectedPercentage === percentage ? "active" : ""
                   }`}
                   onClick={() => handlePercentageClick(percentage)}
-                  disabled={!isConnected || !usdcBalance}
+                  disabled={
+                    !isConnected || !usdcBalance || isLoadingUsdcBalance
+                  }
+                  aria-label={`Select ${percentage}% of your USDC balance`}
+                  aria-pressed={formData.selectedPercentage === percentage}
                 >
                   {percentage}%
                 </button>
@@ -452,46 +498,90 @@ export const SendTokens = () => {
                   isMaxActive ? "active" : ""
                 }`}
                 onClick={handleMaxClick}
-                disabled={!isConnected || !usdcBalance}
+                disabled={!isConnected || !usdcBalance || isLoadingUsdcBalance}
+                aria-label="Select maximum USDC balance"
+                aria-pressed={isMaxActive}
               >
                 Max
               </button>
             </div>
 
             {errors.amount && (
-              <div className="error-message">{errors.amount}</div>
+              <div
+                className="error-message"
+                id={amountErrorId}
+                role="alert"
+                aria-live="assertive"
+              >
+                {errors.amount}
+              </div>
             )}
           </div>
 
           <div className="form-group">
-            <div className="label">Send to</div>
+            <div className="label" id="recipient-label">
+              Send to
+            </div>
             <input
+              id={recipientInputId}
               type="text"
               className={`input ${errors.recipient ? "error" : ""}`}
               placeholder="Paste an Avalanche (C-Chain) address"
               value={formData.recipient}
+              aria-label="Recipient wallet address"
+              aria-labelledby="recipient-label"
+              aria-describedby={recipientErrorId}
+              aria-invalid={!!errors.recipient}
+              aria-required="true"
               onChange={(e) => handleRecipientChange(e.target.value)}
               disabled={!isConnected}
             />
             {errors.recipient && (
-              <div className="error-message">{errors.recipient}</div>
+              <div
+                className="error-message"
+                id={recipientErrorId}
+                role="alert"
+                aria-live="assertive"
+              >
+                {errors.recipient}
+              </div>
             )}
           </div>
 
           <button
             type="submit"
             className="button"
-            disabled={!isConnected || !isFormValid || isLoading}
+            disabled={
+              !isConnected || !isFormValid || isLoading || isLoadingUsdcBalance
+            }
+            aria-label={
+              isLoading ? "Processing transaction" : "Send USDC tokens"
+            }
+            aria-describedby={
+              !isFormValid ? "form-validation-errors" : undefined
+            }
           >
             {isLoading ? (
               <>
-                <span className="loading"></span>
-                {getLoadingText(isPending, isConfirming, isSubmitting)}
+                <span className="loading" aria-hidden="true"></span>
+                <span>
+                  {getLoadingText(isPending, isConfirming, isSubmitting)}
+                </span>
               </>
             ) : (
               "Send"
             )}
           </button>
+
+          {!isFormValid && (errors.recipient || errors.amount) && (
+            <div
+              id="form-validation-errors"
+              className="sr-only"
+              aria-live="polite"
+            >
+              Please fix the form errors before submitting
+            </div>
+          )}
         </form>
       </div>
     </div>

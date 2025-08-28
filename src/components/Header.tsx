@@ -1,6 +1,3 @@
-/**
- * Component for displaying the app header with title and subtitle.
- */
 export const Header = () => {
   return (
     <>
