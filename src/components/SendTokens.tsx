@@ -402,7 +402,7 @@ export const SendTokens = () => {
             <div className="balance-info" id={balanceInfoId}>
               <div className="balance-info-row">
                 <div className="label">Amount</div>
-                <div className="balance-amount" aria-live="polite">
+                <div className="balance-amount desktop-only" aria-live="polite">
                   {isLoadingUsdcBalance ? (
                     <span className="balance-loading">
                       <span className="loading-dots"></span>
@@ -412,6 +412,16 @@ export const SendTokens = () => {
                     `Balance: ${balanceDisplay}`
                   )}
                 </div>
+              </div>
+              <div className="balance-amount mobile-only" aria-live="polite">
+                {isLoadingUsdcBalance ? (
+                  <span className="balance-loading">
+                    <span className="loading-dots"></span>
+                    Loading balance...
+                  </span>
+                ) : (
+                  `Balance: ${balanceDisplay}`
+                )}
               </div>
             </div>
 

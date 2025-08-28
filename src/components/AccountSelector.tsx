@@ -265,18 +265,17 @@ export const AccountSelector = () => {
           </button>
         </div>
         <div className="token-info">
-          <div className="token-name">
-            {address && isValidAddress(address)
-              ? truncateAddress(address)
-              : "Unknown"}
-          </div>
           <div
             className="token-balance"
             aria-label={`AVAX balance: ${
               avaxBalance ? formatEther(avaxBalance.value) : "0"
             } AVAX`}
           >
-            {avaxBalance ? `${formatEther(avaxBalance.value)} AVAX` : "- AVAX"}
+            {avaxBalance
+              ? `Balance: ${Number(formatEther(avaxBalance.value))
+                  .toFixed(8)
+                  .replace(/\.?0+$/, "")} AVAX`
+              : "- AVAX"}
           </div>
         </div>
       </div>
